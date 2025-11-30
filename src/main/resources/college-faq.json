@@ -1,0 +1,28 @@
+{
+  "faq": [
+    {
+      "questions": ["attendance", "attendance requirement", "minimum attendance"],
+      "answer": "The required attendance is 75% minimum."
+    },
+    {
+      "questions": ["bonafide", "apply bonafide", "bonafide certificate"],
+      "answer": "Login to Samvidha → Requisitions → Certificate Request → Bonafide and choose the reason."
+    },
+    {
+      "questions": ["computer science fees", "cse fees", "cse fee"],
+      "answer": "The CSE fee is ₹101,000 per year."
+    },
+     {
+      "questions": ["who is creator","creator","founder"],
+      "answer": "The creators are NAGARGOJE UTTAM  & CH.NAGARAJU"
+    },
+    {
+      "questions": ["hod","who is the hod of cse"],
+      "answer":"MS. G. MARRY SWARANALATHA IS the hod of cse"
+    },
+    {
+      "questions":["who is the principal of IARE","principal"],
+      "answer":"DR. L V NARASIMHA PRASAD"
+    }
+  ]
+}
