@@ -24,7 +24,7 @@
             <version>6.5.0</version>
         </dependency>
 
-        <!-- JSON library -->
+        <!-- JSON Library -->
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
@@ -50,35 +50,39 @@
     <build>
         <plugins>
 
-            <!-- Create a runnable shaded JAR -->
+            <!-- Shade plugin to create runnable fat JAR -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.4.1</version>
+
                 <executions>
                     <execution>
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
+
                         <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>shaded</shadedClassifierName>
+
                             <createDependencyReducedPom>false</createDependencyReducedPom>
 
                             <transformers>
-
-                                <!-- Set main class -->
+                                <!-- Main Class -->
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.ai.telegram.App</mainClass>
                                 </transformer>
 
-                                <!-- Fix Telegram Bot API META-INF/services error -->
+                                <!-- Fix ServiceLoader files -->
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
 
                             </transformers>
-
                         </configuration>
                     </execution>
                 </executions>
+
             </plugin>
 
         </plugins>
