@@ -8,7 +8,7 @@ WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 
-RUN mvn -q -e -DskipTests clean package
+RUN mvn -q -DskipTests clean package
 
 # --------------------------
 # Stage 2: Run the JAR
@@ -17,6 +17,7 @@ FROM eclipse-temurin:17-jre
 
 WORKDIR /app
 
-COPY --from=build /app/target/IAREBot-1.0-SNAPSHOT-shaded.jar app.jar
+# Copy ANY jar starting with IAREBot and ending with .jar
+COPY --from=build /app/target/IAREBot-*-shaded.jar app.jar
 
 CMD ["java", "-jar", "app.jar"]
