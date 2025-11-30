@@ -11,19 +11,25 @@ public class CollegeFAQ {
 
     static {
         JSONArray temp = new JSONArray();
+
         try {
-            InputStream is = CollegeFAQ.class.getClassLoader().getResourceAsStream("college_faq.json");
+            // Correct JSON filename (with hyphen)
+            InputStream is = CollegeFAQ.class.getClassLoader().getResourceAsStream("college-faq.json");
+
             if (is != null) {
                 String text = new String(is.readAllBytes(), StandardCharsets.UTF_8);
                 JSONObject root = new JSONObject(text);
                 temp = root.getJSONArray("faq");
                 System.out.println("FAQ Loaded: " + temp.length() + " items");
             } else {
-                System.out.println("ERROR: college_faq.json not found.");
+                // If Railway cannot find the file
+                System.out.println("ERROR: college-faq.json not found in resources!");
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         faqList = temp;
     }
 
@@ -38,11 +44,12 @@ public class CollegeFAQ {
             JSONArray keywords = obj.getJSONArray("questions");
             for (int j = 0; j < keywords.length(); j++) {
                 String key = keywords.getString(j).toLowerCase();
+
                 if (userText.contains(key)) {
                     return obj.getString("answer");
                 }
             }
         }
-        return null;
+        return null;  // No match found
     }
 }
