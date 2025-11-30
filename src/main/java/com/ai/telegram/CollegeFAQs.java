@@ -39,6 +39,8 @@ public class CollegeFAQs {
     }
 
     public static String getAnswer(String userMessage) {
+        if (userMessage == null || userMessage.isBlank()) return null;
+
         userMessage = userMessage.toLowerCase();
 
         for (FAQ faq : faqs) {
