@@ -1,22 +1,22 @@
-IAREBot
-/Dockerfile
-NAGARGOJE-UTTAM
-NAGARGOJE-UTTAM
-Add Dockerfile for IAREBot deployment
-b1714d2
- · 
-28 minutes ago
-8 lines (6 loc) · 180 Bytes
+# --------------------------
+# Stage 1: Build the JAR
+# --------------------------
+FROM maven:3.9.5-eclipse-temurin-17 AS build
 
-Code
-
-Blame
-Code view is read-only.
-FROM eclipse-temurin:17-jre
 WORKDIR /app
 
-# Copy the shaded jar created by Maven
-COPY target/IAREBot-1.0-SNAPSHOT-shaded.jar app.jar
+COPY pom.xml .
+COPY src ./src
 
-# Run the bot
+RUN mvn -q -e -DskipTests clean package
+
+# --------------------------
+# Stage 2: Run the JAR
+# --------------------------
+FROM eclipse-temurin:17-jre
+
+WORKDIR /app
+
+COPY --from=build /app/target/IAREBot-1.0-SNAPSHOT-shaded.jar app.jar
+
 CMD ["java", "-jar", "app.jar"]
