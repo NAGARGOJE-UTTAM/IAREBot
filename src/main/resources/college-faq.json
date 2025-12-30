@@ -23,6 +23,9 @@
     {
       "questions":["who is the principal of IARE","principal"],
       "answer":"DR. L V NARASIMHA PRASAD"
-    }
+    },
+    {
+      "questions":["total subjects in 3 sem"],
+      "answer":"total 9 subjects"    }
   ]
 }
