@@ -1,49 +1,54 @@
 package com.ai.telegram;
 
-import com.sendgrid.*;
-import com.sendgrid.helpers.mail.Mail;
-import com.sendgrid.helpers.mail.objects.*;
-
-import java.io.IOException;
+import sibApi.*;
+import sibModel.*;
+import java.util.*;
 
 public class EmailHelper {
 
-    public static void sendQueryEmail(String body) {
+    private static final String API_KEY = System.getenv("BREVO_API_KEY");
+    private static final String FROM_EMAIL = System.getenv("FROM_EMAIL");
+    private static final String TO_EMAIL = System.getenv("TO_EMAIL");
 
-        // Read correct environment variables
-        String apiKey = System.getenv("SENDGRID_API_KEY");
-        String fromEmail = System.getenv("FROM_EMAIL");
-        String toEmail = System.getenv("TO_EMAIL");
+    public static void sendQueryEmail(Long userId, String userName, String body) {
 
-        if (apiKey == null || fromEmail == null || toEmail == null) {
-            System.out.println("❌ SendGrid ENV variables NOT configured.");
-            System.out.println("apiKey = " + apiKey);
-            System.out.println("fromEmail = " + fromEmail);
-            System.out.println("toEmail = " + toEmail);
+        if (API_KEY == null || FROM_EMAIL == null || TO_EMAIL == null) {
+            System.out.println("❌ Brevo ENV variables NOT configured.");
             return;
         }
 
-        Email from = new Email(fromEmail);
-        Email to = new Email(toEmail);
-
-        String subject = "New Query from IARE Bot";
-        Content content = new Content("text/plain", body);
-
-        Mail mail = new Mail(from, subject, to, content);
-
-        SendGrid sg = new SendGrid(apiKey);
-        Request request = new Request();
-
         try {
-            request.setMethod(Method.POST);
-            request.setEndpoint("mail/send");
-            request.setBody(mail.build());
+            ApiClient client = Configuration.getDefaultApiClient();
+            client.setApiKey(API_KEY);
 
-            Response response = sg.api(request);
+            TransactionalEmailsApi api = new TransactionalEmailsApi();
 
-            System.out.println("SendGrid Response: " + response.getStatusCode());
+            SendSmtpEmailSender sender = new SendSmtpEmailSender();
+            sender.setEmail(FROM_EMAIL);
+            sender.setName("IARE Bot");
 
-        } catch (IOException e) {
+            SendSmtpEmailTo to = new SendSmtpEmailTo();
+            to.setEmail(TO_EMAIL);
+
+            // Build email content with user details
+            String emailContent =
+                    "New Query Received from IARE Bot\n\n" +
+                    "User ID: " + userId + "\n" +
+                    "User Name: " + userName + "\n\n" +
+                    "Message:\n" + body;
+
+            SendSmtpEmail email = new SendSmtpEmail();
+            email.setSender(sender);
+            email.setTo(Collections.singletonList(to));
+            email.setSubject("New Query from IARE Bot");
+            email.setTextContent(emailContent);
+
+            api.sendTransacEmail(email);
+
+            System.out.println("✅ Brevo Email Sent Successfully");
+
+        } catch (Exception e) {
+            System.out.println("❌ Brevo Email Failed");
             e.printStackTrace();
         }
     }
