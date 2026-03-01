@@ -1,35 +1,27 @@
 package com.ai.telegram;
 
+import java.io.InputStream;
+import java.util.*;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.api.objects.Update;
-
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
-
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-
-import java.io.File;
-import java.util.*;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 public class AIBot extends TelegramLongPollingBot {
 
-    // FIXED
     @Override
     public String getBotUsername() {
-        return "IARECOLLEGE_bot";  // your bot username
+        return "IARECOLLEGE_bot";
     }
 
-    // FIXED
     @Override
     public String getBotToken() {
-        return "8451991977:AAGBAT5zkQKckm43U6FSH8dr-GWjzg84PRE"; // your real token
+        return System.getenv("TELEGRAM_TOKEN"); // Secure token
     }
-
-    @Override
-    public void clearWebhook() {}
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -40,25 +32,29 @@ public class AIBot extends TelegramLongPollingBot {
                 long chatId = update.getMessage().getChatId();
                 String msg = update.getMessage().getText();
 
+                Long userId = update.getMessage().getFrom().getId();
+                String userName = update.getMessage().getFrom().getFirstName();
+
                 if (msg.equalsIgnoreCase("/start")) {
                     sendWelcome(chatId);
                     return;
                 }
 
-                // 1. CHECK JSON FIRST
+                // 1️⃣ Check FAQ first
                 String answer = CollegeFAQ.findAnswer(msg);
 
                 if (answer != null) {
                     sendText(chatId, answer);
                 } else {
-                    // 2. NO ANSWER → AUTO REPLY + SEND EMAIL
-                    sendText(chatId, "We will update you soon. Your query has been recorded.");
 
-                    EmailHelper.sendQueryEmail(
-                            "User Query: " + msg + "\nChat ID: " + chatId
-                    );
+                    sendText(chatId,
+                            "We will update you soon. Your query has been recorded.");
+
+                    // 2️⃣ Send Email with full details
+                    EmailHelper.sendQueryEmail(userId, userName, msg);
                 }
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -66,49 +62,52 @@ public class AIBot extends TelegramLongPollingBot {
 
     private void sendWelcome(long chatId) {
 
-        SendPhoto photo = new SendPhoto();
-        photo.setChatId(chatId);
-
-        File logo = new File("C:\\Users\\nagar\\AIChatBot\\src\\main\\resources\\logo.jpeg");
-
-        if (logo.exists()) {
-            photo.setPhoto(new InputFile(logo));
-        }
-
-        photo.setCaption("⭐ WELCOME TO IARE ASSISTANT ⭐\n\nSelect an option below:");
-
         try {
-            execute(photo);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
 
-        // MENU GRID
-        InlineKeyboardMarkup menu = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+            // 🔹 Send Logo from resources
+            InputStream is = getClass().getClassLoader()
+                    .getResourceAsStream("logo.jpeg");
 
-        rows.add(Arrays.asList(
-                button("Fees", "fees"),
-                button("Attendance", "attendance"),
-                button("Bonafide", "bonafide")
-        ));
+            if (is != null) {
+                SendPhoto photo = new SendPhoto();
+                photo.setChatId(String.valueOf(chatId));
+                photo.setPhoto(new InputFile(is, "logo.jpeg"));
+                photo.setCaption("⭐ WELCOME TO IARE ASSISTANT ⭐");
+                execute(photo);
+            }
 
-        rows.add(Arrays.asList(
-                button("Courses", "courses"),
-                button("Hostel", "hostel"),
-                button("Contact", "contact")
-        ));
+            // 🔹 Create Menu Buttons
+            InlineKeyboardMarkup menu = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
-        menu.setKeyboard(rows);
+            rows.add(Arrays.asList(
+                    button("Fees", "fees"),
+                    button("Attendance", "attendance"),
+                    button("Bonafide", "bonafide")
+            ));
 
-        SendMessage msg = new SendMessage();
-        msg.setChatId(chatId);
-        msg.setText("Choose an option:");
-        msg.setReplyMarkup(menu);
+            rows.add(Arrays.asList(
+                    button("Courses", "courses"),
+                    button("Hostel", "hostel"),
+                    button("Contact", "contact")
+            ));
 
-        try {
-            execute(msg);
-        } catch (TelegramApiException e) {
+            menu.setKeyboard(rows);
+
+            SendMessage menuMsg = new SendMessage();
+            menuMsg.setChatId(String.valueOf(chatId));
+            menuMsg.setText("📌 Please choose an option below:");
+            menuMsg.setReplyMarkup(menu);
+
+            execute(menuMsg);
+
+            // 🔹 Instruction message
+            SendMessage instruction = new SendMessage();
+            instruction.setChatId(String.valueOf(chatId));
+            instruction.setText("💬 Type your query here to get the solution.");
+            execute(instruction);
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

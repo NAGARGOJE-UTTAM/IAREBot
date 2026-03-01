@@ -1,54 +1,59 @@
 package com.ai.telegram;
 
-import sibApi.*;
-import sibModel.*;
-import java.util.*;
+import jakarta.mail.*;
+import jakarta.mail.internet.*;
+import java.util.Properties;
 
 public class EmailHelper {
 
-    private static final String API_KEY = System.getenv("BREVO_API_KEY");
+    private static final String SMTP_USERNAME = System.getenv("SMTP_USERNAME");
+    private static final String SMTP_PASSWORD = System.getenv("SMTP_PASSWORD");
     private static final String FROM_EMAIL = System.getenv("FROM_EMAIL");
     private static final String TO_EMAIL = System.getenv("TO_EMAIL");
 
     public static void sendQueryEmail(Long userId, String userName, String body) {
 
-        if (API_KEY == null || FROM_EMAIL == null || TO_EMAIL == null) {
-            System.out.println("❌ Brevo ENV variables NOT configured.");
+        if (SMTP_USERNAME == null || SMTP_PASSWORD == null ||
+                FROM_EMAIL == null || TO_EMAIL == null) {
+
+            System.out.println("❌ SMTP ENV variables NOT configured.");
             return;
         }
 
+        Properties props = new Properties();
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.host", "smtp-relay.brevo.com");
+        props.put("mail.smtp.port", "587");
+
+        Session session = Session.getInstance(props,
+                new Authenticator() {
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(SMTP_USERNAME, SMTP_PASSWORD);
+                    }
+                });
+
         try {
-            ApiClient client = Configuration.getDefaultApiClient();
-            client.setApiKey(API_KEY);
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(FROM_EMAIL));
+            message.setRecipients(Message.RecipientType.TO,
+                    InternetAddress.parse(TO_EMAIL));
+            message.setSubject("New Query from IARE Bot");
 
-            TransactionalEmailsApi api = new TransactionalEmailsApi();
-
-            SendSmtpEmailSender sender = new SendSmtpEmailSender();
-            sender.setEmail(FROM_EMAIL);
-            sender.setName("IARE Bot");
-
-            SendSmtpEmailTo to = new SendSmtpEmailTo();
-            to.setEmail(TO_EMAIL);
-
-            // Build email content with user details
             String emailContent =
                     "New Query Received from IARE Bot\n\n" +
-                    "User ID: " + userId + "\n" +
-                    "User Name: " + userName + "\n\n" +
-                    "Message:\n" + body;
+                            "User ID: " + userId + "\n" +
+                            "User Name: " + userName + "\n\n" +
+                            "Message:\n" + body;
 
-            SendSmtpEmail email = new SendSmtpEmail();
-            email.setSender(sender);
-            email.setTo(Collections.singletonList(to));
-            email.setSubject("New Query from IARE Bot");
-            email.setTextContent(emailContent);
+            message.setText(emailContent);
 
-            api.sendTransacEmail(email);
+            Transport.send(message);
 
-            System.out.println("✅ Brevo Email Sent Successfully");
+            System.out.println("✅ Email Sent Successfully via SMTP");
 
-        } catch (Exception e) {
-            System.out.println("❌ Brevo Email Failed");
+        } catch (MessagingException e) {
+            System.out.println("❌ Email Failed");
             e.printStackTrace();
         }
     }
